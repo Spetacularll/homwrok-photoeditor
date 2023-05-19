@@ -31,6 +31,7 @@ public class PictureFlowPane extends StackPane {
     public static int i = 0;
     static int i1, i2;
     public static int num = 5;//The static int used for loading.
+    public static int loaded;
 
     public static int getI(int num) {
         i += num;
@@ -63,12 +64,26 @@ public class PictureFlowPane extends StackPane {
         flowPane.setStyle("-fx-background-color: rgb(245,245,245)");
         flowPane.setPrefSize(670, 760);
         //加入用于显示图片的flowPane与用于鼠标拖拽的界面
+
         scrollPane.vvalueProperty().addListener((observable, oldValue, newValue) -> {
+
+        // Wait for all threads to finish
+        try {
+            if (thread != null) {
+                thread.join();
+            }
+            if (thread1 != null) {
+                thread1.join();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
             if (newValue.doubleValue() >= scrollPane.getVmax()) {
-                if(loadTb.Loaded==fileCount){
+                System.out.println(loaded);
+                if(loaded==fileCount){
                   ;
                 }else{
-                loadTb = new LoadTb(fileCount);
+                       loadTb = new LoadTb(fileCount);
                 thread1 = new Thread(loadTb);
                 thread1.start();
                 }
@@ -169,7 +184,7 @@ public class PictureFlowPane extends StackPane {
             e.printStackTrace();
         }
 
-
+        loaded=0;
         Main.pictureFlowPane.flowPane.getChildren().clear();
         imageArrayList.clear();
         setFile(file);
@@ -215,6 +230,8 @@ public class PictureFlowPane extends StackPane {
         loadTb = new LoadTb(fileCount);
         thread1 = new Thread(loadTb);
         thread1.start();
+        loaded+=loadTb.Loaded;
+        System.out.println(loaded);
         // Remove any ImageBoxButton whose file is not in the Set
         Platform.runLater(()->{
              Main.pictureFlowPane.flowPane.getChildren().removeIf(node -> {
