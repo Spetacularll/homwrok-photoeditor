@@ -65,7 +65,9 @@ public class PictureFlowPane extends StackPane {
         //加入用于显示图片的flowPane与用于鼠标拖拽的界面
         scrollPane.vvalueProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.doubleValue() >= scrollPane.getVmax()) {
-                ;
+                loadTb = new LoadTb(fileCount);
+                thread1 = new Thread(loadTb);
+                thread1.start();
             }
         });
         scrollPane.setContent(flowPane);
@@ -141,41 +143,7 @@ public class PictureFlowPane extends StackPane {
 
 
     }
-    private void ShowThumbnails(){
-        if (fileCount != 0) {
-            File value;
-            for (int t = 0; t < fileArrayList.size(); t++) {
-                value = fileArrayList.get(t);
-                String fileName = value.getName();
-                //支持图片的格式
-                ImageBoxButton imageBoxLabel = new ImageBoxButton("File:" + value.getAbsolutePath(), fileName);
-                    Main.pictureFlowPane.flowPane.getChildren().add(imageBoxLabel.getImageLabel());
 
-            }
-        }
-    }
-    private void ReadingData(){
-        //读取目录信息
-        Iterator<File> iterator=fileArrayList.iterator();
-        while(iterator.hasNext()){
-            File value=iterator.next();
-            if (!value.isDirectory()) {
-                String fileName = value.getName();
-                String suffix = fileName.substring(fileName.lastIndexOf(".") + 1);
-                //支持图片的格式
-                if (suffix.equals("jpg") || suffix.equals("JPG") || suffix.equals("png") || suffix.equals("gif")
-                        || suffix.equals("bmp") || suffix.equals("jpeg")) {
-                    fileCount++;
-                    sizeOfImage += value.length() / 1024.0;
-                    //下方显示该目录的图片项目数
-                }else {
-                    iterator.remove();
-                }
-            }else {
-                iterator.remove();
-            }
-        }
-    }
     private LoadTb loadTb;
     private ReadFd readFd;
     private Thread thread;

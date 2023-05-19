@@ -21,8 +21,8 @@ public class LoadTb implements Runnable{
     private void Loading(){
     if (fileCount != 0) {
         File value;
-        for (int t = 0; t < fileArrayList.size(); t++) {
-            if(!running){
+        for (int t = 0; t < 50; t++) {
+            if(!running||t==fileArrayList.size()){
                 break;
             }
             value = fileArrayList.get(t);
