@@ -19,14 +19,14 @@ import javafx.scene.layout.StackPane;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.text.DecimalFormat;
+import java.util.*;
 
 
 public class PictureFlowPane extends StackPane {
     public final FlowPane flowPane = new FlowPane();
     public static TreeItem<File> file = new TreeItem<>();
+    public static HashSet<String> PictureSet = new HashSet<>();
     public static int fileCount = 0;
     public static int i = 0;
     static int i1, i2;
@@ -46,9 +46,6 @@ public class PictureFlowPane extends StackPane {
     public static String sizeofimage;
     public static int v = 0;    //判断图片总大小是否大于1MB
     public static ArrayList<String> imageArrayList = new ArrayList<>();
-    public static final ArrayList<String> PitureFile = new ArrayList<>();
-
-
     public static void setFile(TreeItem<File> file) {
         PictureFlowPane.file = file;
     }
@@ -68,20 +65,7 @@ public class PictureFlowPane extends StackPane {
         //加入用于显示图片的flowPane与用于鼠标拖拽的界面
         scrollPane.vvalueProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.doubleValue() >= scrollPane.getVmax()) {
-
-                if (fileCount > 0) {
-                    if (i1 > 0) {
-                        i1--;
-                        ReadThread.numThread = 4;
-                        new ReadThread(5).start();
-
-                    } else if (i2 > 0) {
-                        ReadThread.numThread = i2;
-                        new ReadThread(1).start();
-
-                        i2 = 0;
-                    }
-                }
+                ;
             }
         });
         scrollPane.setContent(flowPane);
@@ -90,6 +74,7 @@ public class PictureFlowPane extends StackPane {
         setEvents();
 
     }
+
 
     //三个面板都设置事件
     private void setEvents() {
@@ -156,12 +141,63 @@ public class PictureFlowPane extends StackPane {
 
 
     }
+    private void ShowThumbnails(){
+        if (fileCount != 0) {
+            File value;
+            for (int t = 0; t < fileArrayList.size(); t++) {
+                value = fileArrayList.get(t);
+                String fileName = value.getName();
+                //支持图片的格式
+                ImageBoxButton imageBoxLabel = new ImageBoxButton("File:" + value.getAbsolutePath(), fileName);
+                    Main.pictureFlowPane.flowPane.getChildren().add(imageBoxLabel.getImageLabel());
 
+            }
+        }
+    }
+    private void ReadingData(){
+        //读取目录信息
+        Iterator<File> iterator=fileArrayList.iterator();
+        while(iterator.hasNext()){
+            File value=iterator.next();
+            if (!value.isDirectory()) {
+                String fileName = value.getName();
+                String suffix = fileName.substring(fileName.lastIndexOf(".") + 1);
+                //支持图片的格式
+                if (suffix.equals("jpg") || suffix.equals("JPG") || suffix.equals("png") || suffix.equals("gif")
+                        || suffix.equals("bmp") || suffix.equals("jpeg")) {
+                    fileCount++;
+                    sizeOfImage += value.length() / 1024.0;
+                    //下方显示该目录的图片项目数
+                }else {
+                    iterator.remove();
+                }
+            }else {
+                iterator.remove();
+            }
+        }
+    }
+    private LoadTb loadTb;
+    private ReadFd readFd;
+    private Thread thread;
+    private Thread thread1;
     public void getPicture(TreeItem<File> file) throws MalformedURLException {
         //清空和重新设置成员变量
+        if (loadTb != null) {
+            loadTb.running = false;
+        }
+        // Wait for all threads to finish
+        try {
+            if (thread != null) {
+                thread.join();
+            }
+            if (thread1 != null) {
+                thread1.join();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
 
-        PitureFile.clear();
         Main.pictureFlowPane.flowPane.getChildren().clear();
         imageArrayList.clear();
         setFile(file);
@@ -172,43 +208,54 @@ public class PictureFlowPane extends StackPane {
 
         fileArrayList.addAll(List.of(Objects.requireNonNull(file.getValue().listFiles())));
 
-
-        //读取目录信息
-
-        Thread thread = new Thread(() -> {
-            try {
-                Thread getDataThread = new GetDataThread();
-                getDataThread.start();
-                getDataThread.join();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            Platform.runLater(() -> {
-                if (v == 1) {
-                    Main.myTextPane.text1.setText("总共" + fileCount + "个项目" + "             大小：" + sizeofimage + "MB");
-                } else {
-                    Main.myTextPane.text1.setText("总共" + fileCount + "个项目" + "            大小：" + sizeofimage + "KB");
-                }
-                sizeOfImage = 0;
-            });
-
-            if (fileCount != 0) {
-                i1 = fileCount / 20;
-                i2 = fileCount % 20;
-                if (i1 >= 2) {
-                    i1 -= 2;
-                    //先读取40张
-                    ReadThread.numThread = 4;
-                    ReadThread readThread = new ReadThread(10);
-                    readThread.start();
-                } else {
-                    ReadThread.numThread = i1 * 20 + i2;
-                    ReadThread readThread = new ReadThread(1);
-                    readThread.start();
-                    i1 = i2 = 0;
-                }
-            }
-        });
+        // Create an instance of ReadFd and pass it to a Thread object
+        readFd = new ReadFd(fileCount,sizeOfImage);
+        thread = new Thread(readFd);
+        // Start the thread
         thread.start();
+
+        // Wait for the thread to finish
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        fileCount= readFd.fileCount;
+        sizeOfImage= readFd.sizeOfImage;
+
+        if (sizeOfImage >= 1024) {
+            sizeOfImage /= 1024;
+            v = 1;
+            DecimalFormat format = new DecimalFormat("0.00");
+            sizeofimage = format.format(sizeOfImage);
+        } else {
+            v = 0;
+            DecimalFormat format = new DecimalFormat("0.00");
+            sizeofimage = format.format(sizeOfImage);
+        }
+        if (v == 1) {
+            Main.myTextPane.text1.setText("总共" + fileCount + "个项目" + " 大小：" + sizeofimage + "MB");
+        } else {
+            Main.myTextPane.text1.setText("总共" + fileCount + "个项目" + " 大小：" + sizeofimage + "KB");
+        }
+        sizeOfImage = 0;
+
+        loadTb = new LoadTb(fileCount);
+        thread1 = new Thread(loadTb);
+        thread1.start();
+        // Remove any ImageBoxButton whose file is not in the Set
+        Platform.runLater(()->{
+             Main.pictureFlowPane.flowPane.getChildren().removeIf(node -> {
+            if (node instanceof ImageBoxButton) {
+                ImageBoxButton imageBoxButton = (ImageBoxButton) node;
+                return !PictureSet.contains(imageBoxButton.getImagePath());
+            }
+            return false;
+        });
+        });
+
     }
-}
+        }
+
+
+

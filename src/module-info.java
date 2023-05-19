@@ -13,6 +13,7 @@ module film {
     exports film;
     exports edit.controller;
     exports edit.Util;
+    exports Browser;
     opens edit.controller to javafx.fxml;
     opens edit.Util to javafx.fxml;
 }
