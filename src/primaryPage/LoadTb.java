@@ -10,6 +10,7 @@ public class LoadTb implements Runnable{
 
     public volatile boolean running=true;
     public int fileCount;
+    public int Loaded;
     public LoadTb(int fileCount){
         this.fileCount=fileCount;
     }
@@ -22,9 +23,13 @@ public class LoadTb implements Runnable{
     if (fileCount != 0) {
         File value;
         for (int t = 0; t < 50; t++) {
+ System.out.println(Loaded);
             if(!running||t==fileArrayList.size()){
                 break;
             }
+
+            this.Loaded = t+1;
+
             value = fileArrayList.get(t);
             String fileName = value.getName();
             ImageBoxButton imageBoxLabel = new ImageBoxButton("File:" + value.getAbsolutePath(), fileName);

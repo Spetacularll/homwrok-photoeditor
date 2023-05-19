@@ -65,9 +65,13 @@ public class PictureFlowPane extends StackPane {
         //加入用于显示图片的flowPane与用于鼠标拖拽的界面
         scrollPane.vvalueProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.doubleValue() >= scrollPane.getVmax()) {
+                if(loadTb.Loaded==fileCount){
+                  ;
+                }else{
                 loadTb = new LoadTb(fileCount);
                 thread1 = new Thread(loadTb);
                 thread1.start();
+                }
             }
         });
         scrollPane.setContent(flowPane);
