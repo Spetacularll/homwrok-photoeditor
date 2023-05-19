@@ -1,0 +1,56 @@
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+
+public class MosaicImage {
+    public static void main(String[] args) {
+        try {
+            // 读取原始图片
+            BufferedImage originalImage = ImageIO.read(new File("originalImage.jpg"));
+            // 获取图片宽度和高度
+            int width = originalImage.getWidth();
+            int height = originalImage.getHeight();
+            // 设置马赛克格大小
+            int size = 10;
+            // 遍历图片像素
+            for (int i = 0; i < width; i += size) {
+                for (int j = 0; j < height; j += size) {
+                    // 获取当前马赛克格内的像素颜色值
+                    int[] pixels = new int[size * size];
+                    originalImage.getRGB(i, j, size, size, pixels, 0, size);
+                    // 计算马赛克格内所有像素的平均颜色值
+                    int r = 0, g = 0, b = 0;
+                    for (int k = 0; k < pixels.length; k++) {
+                        int color = pixels[k];
+                        r += (color >> 16) & 0xff;
+                        g += (color >> 8) & 0xff;
+                        b += color & 0xff;
+                    }
+                    r /= pixels.length;
+                    g /= pixels.length;
+                    b /= pixels.length;
+                    // 将马赛克格内所有像素的颜色值设置为平均颜色值
+                    int avgColor = (r << 16) | (g << 8) | b;
+                    for (int k = 0; k < pixels.length; k++) {
+                        pixels[k] = avgColor;
+                    }
+                    originalImage.setRGB(i, j, size, size, pixels, 0, size);
+                }
+            }
+            // 输出处理后的图片
+            ImageIO.write(originalImage, "jpg", new File("mosaicImage.jpg"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+在这段代码中，r += (color >> 16) & 0xff，g += (color >> 8) & 0xff 和 b += color & 0xff 这三行代码用于从整数颜色值中提取红色、绿色和蓝色分量。
+
+整数颜色值通常表示为32位整数，其中每个颜色分量占8位。从高位到低位，分别是alpha（透明度）、红色、绿色和蓝色分量。
+
+右移（>>）操作用于将颜色分量移动到最低的8位。例如，(color >> 16) 将红色分量移动到最低的8位。
+
+与（&）操作用于屏蔽掉其他颜色分量，只保留需要的颜色分量。例如，(color >> 16) & 0xff 将屏蔽掉除红色分量以外的所有颜色分量。
+
+这样，我们就可以从整数颜色值中提取出红色、绿色和蓝色分量，并将它们累加起来，最后求出马赛克格内所有像素的平均颜色值。
