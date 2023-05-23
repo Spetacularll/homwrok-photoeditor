@@ -134,13 +134,7 @@ public class ImageSliderPane extends BorderPane {
                     alert.show();
                 }
                 else {
-                    //? ?这段代码使得第一张图片无法编辑
-//                    if(currentIndex==0){
-//                        String str = imageArrayList.get(currentIndex);
-//                        EditController.filePath = str.substring(5);
-//                    }else {
-//                        EditController.filePath = imageArrayList.get(currentIndex);
-//                    }
+
                     EditController.filePath = imageArrayList.get(currentIndex);
                     new EditPage();
                 }
@@ -182,7 +176,7 @@ public class ImageSliderPane extends BorderPane {
 
 
 
-        buttonsPane = new HBox(previousButton, nextButton, playButton, pauseButton,zoomButton,resetButton,editButton);
+        buttonsPane = new HBox(previousButton,playButton, pauseButton,zoomButton,resetButton,editButton,nextButton, );
         buttonsPane.setAlignment(Pos.CENTER);
         buttonsPane.setSpacing(10);
         buttonsPane.setId("buttonsPane");
