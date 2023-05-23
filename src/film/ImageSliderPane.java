@@ -29,7 +29,7 @@ import static primaryPage.PictureFlowPane.imageArrayList;
 
 public class ImageSliderPane extends BorderPane {
 
-    private final ArrayList<Image> images;
+    private final ArrayList<String> images;
     private final ImageView imageView;
     private final Timeline timeline;
     private final MediaPlayer mediaPlayer;
@@ -44,7 +44,7 @@ public class ImageSliderPane extends BorderPane {
     Button zoomButton;
     Button resetButton;
     HBox buttonsPane;
-    ListView<Image> thumbnailView;
+    ListView<String> thumbnailView;
     int currentIndex;
 
     private void initthumbPane() {
@@ -53,19 +53,21 @@ public class ImageSliderPane extends BorderPane {
         thumbnailView.setPrefHeight(60);
         thumbnailView.setId("thumbnailBox");
         thumbnailView.setItems(FXCollections.observableArrayList(images));
-        thumbnailView.setCellFactory(new Callback<ListView<Image>, ListCell<Image>>() {
+        thumbnailView.setCellFactory(new Callback<ListView<String>, ListCell<String>>() {
             @Override
-            public ListCell<Image> call(ListView<Image> param) {
-                return new ListCell<Image>() {
+            public ListCell<String> call(ListView<String> param) {
+                return new ListCell<String>() {
                     private ImageView imageView = new ImageView();
+
                     @Override
-                    protected void updateItem(Image item, boolean empty) {
+                    protected void updateItem(String item, boolean empty) {
                         super.updateItem(item, empty);
                         if (empty || item == null) {
                             setText(null);
                             setGraphic(null);
                         } else {
-                            imageView.setImage(item);
+                            Image image = new Image(item);
+                            imageView.setImage(image);
                             imageView.setFitWidth(50);
                             imageView.setFitHeight(50);
                             imageView.setPreserveRatio(true);
@@ -76,9 +78,10 @@ public class ImageSliderPane extends BorderPane {
             }
         });
         thumbnailView.setOnMouseClicked(event -> {
-            Image selectedItem = thumbnailView.getSelectionModel().getSelectedItem();
-            if (selectedItem != null) {
-                imageView.setImage(selectedItem);
+            String selectedImagePath = thumbnailView.getSelectionModel().getSelectedItem();
+            if (selectedImagePath != null) {
+                Image selectedImage = new Image(selectedImagePath);
+                imageView.setImage(selectedImage);
                 resizeWindow();
             }
         });
@@ -134,7 +137,13 @@ public class ImageSliderPane extends BorderPane {
                     alert.show();
                 }
                 else {
-
+                    //? ?这段代码使得第一张图片无法编辑
+//                    if(currentIndex==0){
+//                        String str = imageArrayList.get(currentIndex);
+//                        EditController.filePath = str.substring(5);
+//                    }else {
+//                        EditController.filePath = imageArrayList.get(currentIndex);
+//                    }
                     EditController.filePath = imageArrayList.get(currentIndex);
                     new EditPage();
                 }
@@ -176,7 +185,7 @@ public class ImageSliderPane extends BorderPane {
 
 
 
-        buttonsPane = new HBox(previousButton,playButton, pauseButton,zoomButton,resetButton,editButton,nextButton, );
+        buttonsPane = new HBox(previousButton, playButton, pauseButton,zoomButton,resetButton,editButton, nextButton);
         buttonsPane.setAlignment(Pos.CENTER);
         buttonsPane.setSpacing(10);
         buttonsPane.setId("buttonsPane");
@@ -197,7 +206,7 @@ public class ImageSliderPane extends BorderPane {
     }
 
     public ImageSliderPane(ArrayList<String> images, Media backgroundMusic) {
-        this.images = ConvertList(images);
+        this.images = images;
         imageView = new ImageView(images.get(0));
         imageView.setPreserveRatio(true);
         imageView.setSmooth(true);
@@ -225,22 +234,25 @@ public class ImageSliderPane extends BorderPane {
     }
 
     private void previousImage() {
-         currentIndex = images.indexOf(imageView.getImage());
-        if (currentIndex == 0) {
+
+         currentIndex = images.indexOf(imageView.getImage().getUrl());
+        System.out.println(currentIndex);
+         if (currentIndex == 0) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.titleProperty().set("提示");
             alert.headerTextProperty().set("已经到顶了！");
             alert.show();
             alert.setOnHidden(evt -> resizeWindow());
         } else {
-            imageView.setImage(images.get(currentIndex - 1));
+            imageView.setImage(new Image(images.get(currentIndex - 1)));
             resizeWindow();
         }
 
     }
 
     private void nextImage() {
-         currentIndex = images.indexOf(imageView.getImage());
+         currentIndex = images.indexOf(imageView.getImage().getUrl());
+        System.out.println(currentIndex);
         if (currentIndex == images.size() - 1) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("提示");
@@ -249,7 +261,7 @@ public class ImageSliderPane extends BorderPane {
             alert.setOnHidden(evt -> resizeWindow());
             timeline.pause();
         } else {
-            imageView.setImage(images.get(currentIndex + 1));
+            imageView.setImage(new Image(images.get(currentIndex + 1)));
             resizeWindow();
         }
     }
